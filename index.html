@@ -1,0 +1,23 @@
+<!doctype html>
+<html ng-app="demo" ng-controller="DemoCtrl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="language" content="english">
+    <title>ngConexo Demo</title>
+  </head>
+  <body>
+    <script src="/bower/angular/angular.min.js"></script>
+    <script src="/bower/angular-cookies/angular-cookies.min.js"></script>
+    <script src="/bower/angular-sanitize/angular-sanitize.min.js"></script>
+    <script src="/dist/ng-conexo.js"></script>
+    <script src="/demo/demo.js"></script>
+
+
+    <button ng-click="login()">Login</button>
+    <button ng-click="listPolicies()">List Policies</button>
+    <button ng-click="logout()">Logout</button>
+
+    <p>{{message}}</p>
+
+  </body>
+</html>

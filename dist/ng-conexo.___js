@@ -1,0 +1,345 @@
+(function (angular) {
+
+  // Create all modules and define dependencies to make sure they exist
+  // and are loaded in the correct order to satisfy dependency injection
+  // before all nested files are concatenated by Gulp
+
+  // Config
+  angular.module('ngConexo.config', [])
+      .value('ngConexo.config', {
+          debug: true
+      });
+
+  // Modules
+  angular.module('ngConexo.services', []);
+
+  angular.module('ngConexo',
+      [
+          'ngConexo.config',
+          'ngConexo.services',
+          'ngCookies',
+          'ngSanitize'
+      ]);
+
+})(angular);
+
+'use strict';
+
+var mod = angular.module('ngConexo.services');
+
+mod.constant('$cxConstants', {
+	LOGOUT: 4,
+	LOGIN: 5,
+	OPEN_UC: 11
+});
+
+mod.constant('USER_ROLES', {
+  all: '*',
+  unknown: 'unknown',
+  notConfirmed: 'not-confirmed',
+  fullUser: 'full-user'
+
+});
+
+mod.factory('$cxAuth',['$cxRequest', '$q', '$cookies', '$cookieStore', '$cxConstants',
+	function($cxRequest, $q, $cookies, $cookieStore, $cxConstants) {
+
+		var cxAuth = {};
+		var user, token;
+
+		cxAuth.getAuth = function() {
+
+			var context = $cookies.uc_context;
+			if (context !== undefined) {
+
+
+			}
+
+			return context;
+
+		}
+
+		cxAuth.getToken = function() {
+			if (token===undefined) {
+				token = $cookies.authToken;
+				if (token !== undefined) {
+					token = token.replace(/"/g, '');
+				}
+			}
+			return token;
+		};
+
+		cxAuth.cleanAuth = function() {
+			token = undefined;
+			user = {
+				role: 'unknown'
+			};
+			$cookieStore.remove('authToken');
+			$cookieStore.remove('user');
+		};
+
+		cxAuth.isAuthenticated = function () {
+			return this.getToken() !== undefined;
+		};
+
+		cxAuth.isAuthorized = function (authorizedRoles) {
+			if (!angular.isArray(authorizedRoles)) {
+				authorizedRoles = [authorizedRoles];
+			}
+			console.log('user role: ' + user.role + ' authorized: ' + authorizedRoles[0]);
+			return authorizedRoles.indexOf(user.role) !== -1;
+		};		
+
+		cxAuth.login = function(credentials) {
+
+			var deferred = $q.defer();
+
+			var data = {
+				SYSMSG: {
+					_SignalName: $cxConstants.LOGIN,
+					SYSTEM_CODE: credentials.syscode,
+					LOGIN: credentials.username,
+					PASSWORD: credentials.password,
+					AUDIT_CONTEXT: '',
+					CLIENT_VERSION: '1.0.5.0',
+					CHANNEL: 'BANSEG'
+				}
+			};
+
+			$cxRequest.execute(data).then(
+				function (response) {
+					token = response.SYSMSG.UCID[0]._;
+					token = token.replace(/"/g, '');
+					$cookieStore.put('authToken', token);
+					deferred.resolve(token);
+				},
+				function (err) {
+					deferred.reject(err);
+				}
+			);
+
+			return deferred.promise;
+		};
+
+		cxAuth.logout = function() {
+
+			var deferred = $q.defer();
+
+			var data = {
+				SYSMSG: {
+					_SignalName: $cxConstants.LOGOUT,
+				}
+			};
+
+			$cxRequest.execute(data).then(
+				function (response) {
+					cxAuth.cleanAuth();
+					$cxRequest.cleanUC();
+					deferred.resolve(true);
+				},
+				function (err) {
+					deferred.reject(err);
+				}
+			);
+
+			return deferred.promise;
+		};
+
+		cxAuth.getToken();
+
+		return cxAuth;
+	}
+]);
+'use strict';
+
+var mod = angular.module('ngConexo.services');
+
+mod.provider('$cxRequest', [
+	function() {
+		//'use strict';
+
+		var url = '';
+		var server = 'localhost';
+		var syscode = '';
+		var port = '';
+		var channel = '';
+		var config = {};
+
+		var updateConfig = function() {
+
+			config = {
+				headers: {
+					'Content-type': 'application/json',
+					'cxSystemCode': syscode,
+					'cxServer': server,
+					'cxPort': port
+				}
+			};
+
+		};
+
+		this.setUrl = function(value) {
+			url = value;
+		};
+
+		this.setChannel = function(value) {
+			channel = value;
+		};		
+
+		this.setServer = function(value) {
+			server = value;
+			updateConfig();
+		};
+
+		this.setSysCode = function(value) {
+			syscode = value;
+			updateConfig();
+		};
+
+		this.setPort = function(value) {
+			port = value;
+			updateConfig();
+		};
+
+		this.$get = function($http, $q, $cxConstants) {
+
+			var uc = {};
+
+			var cxRequest = {};
+
+			cxRequest.cleanUC = function() {
+				uc = {};
+			};
+
+			cxRequest.newRequest = function(ucid, signal) {
+				var req = {};
+				req.ucid = ucid;
+				req.signal = signal;
+
+				req.data = {
+					SYSMSG: {
+						_SignalName: undefined,
+						_SerialNumber: undefined,
+						_Recipient: undefined,
+						_Sender: undefined,
+						CHANNEL: this.channel
+					}
+				};
+				req.send = function() {
+					return cxRequest.callUseCase(this.ucid, this.signal, this.data);
+				};
+				return req;
+			};
+
+			cxRequest.execute = function(data) {
+				var deferred = $q.defer();
+				$http.post(url, data, config).success(
+					function(response) {
+						if (response.SYSMSG._Id === 1) { //SYSTEM ERROR
+							deferred.reject(response.SYSMSG.MESSAGE[0]._);
+						}
+						else if (response.SYSMSG._Id === 2) {
+							deferred.reject(response.SYSMSG.MESSAGE[0]._);
+						}
+						else {
+							deferred.resolve(response);
+						}
+					}
+				).error(
+					function(err) {
+						deferred.reject(err);
+					}
+				);
+				return deferred.promise;
+			};
+
+			cxRequest.openUseCase = function(ucid) {
+				var data = {
+					SYSMSG: {
+						_SignalName: $cxConstants.OPEN_UC,
+						USECASEID: ucid,
+						GUIID: ucid
+					}
+				};
+				return this.execute(data);
+			};
+
+			cxRequest.callUseCase = function(ucid, signal, msg) {
+				var self = this;
+				var deferred = $q.defer();
+				if (uc[ucid] === undefined) {
+					//must open UC first
+					self.openUseCase(ucid).then(
+						function(response) {
+							uc[ucid] = response.SYSMSG.UCID[0]._; //store Running UC Id
+							msg.SYSMSG._SignalName  = signal;
+							msg.SYSMSG._Recipient   = uc[ucid];
+							self.execute(msg).then(
+								function(resp) {
+									deferred.resolve(resp);
+								},
+								function(err) {
+									deferred.reject(err);
+								}
+							);
+						},
+						function (err) {
+							deferred.reject(err);
+						}
+					);
+				} else {
+					msg.SYSMSG._SignalName  = signal;
+					msg.SYSMSG._Recipient   = uc[ucid];
+					this.execute(msg).then(
+						function(resp) {
+							deferred.resolve(resp);
+						},
+						function(err) {
+							deferred.reject(err);
+						}
+					);
+				}
+				return deferred.promise;
+			};
+			return cxRequest;
+		};
+	}
+]);
+
+'use strict';
+
+var mod = angular.module('ngConexo.services');
+
+mod.factory('$cxRequestInterceptor',['$injector', 
+	function ($injector) {
+		var cxInterceptor = {};
+		cxInterceptor.request = function (req) {
+			var token = $injector.get('$cxAuth').getToken();
+			if (req.method === 'POST' && req.data!==undefined) {
+
+				console.log('intercepting...');
+
+				if (req.data.SYSMSG._SerialNumber === undefined) {
+					req.data.SYSMSG._SerialNumber = 0;
+				}
+				if (req.data.SYSMSG._Sender === undefined) {
+					req.data.SYSMSG._Sender = 0;
+				}
+				if (req.data.SYSMSG._Recipient === undefined) {
+					if (token !== undefined) {
+						req.data.SYSMSG._Recipient = token;
+					} else {
+						req.data.SYSMSG._Recipient = 0;
+					}
+				}
+			}
+			console.log(req.data);
+			return req;
+		};
+		return cxInterceptor;
+	}
+]);
+
+mod.config(['$httpProvider', function($httpProvider) {
+    $httpProvider.interceptors.push('$cxRequestInterceptor');
+}]);
