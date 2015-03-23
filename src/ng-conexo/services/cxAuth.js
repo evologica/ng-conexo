@@ -8,12 +8,6 @@ mod.constant('$cxConstants', {
 	OPEN_UC: 11
 });
 
-mod.constant('USER_NATURE', {
-  anonymous: 'anonymous',
-  primeiroAcesso: 3,
-  segurado: 4
-});
-
 mod.factory('$cxAuth',['$cxRequest', '$q', '$cookies', '$cookieStore', '$cxConstants', 
 	function($cxRequest, $q, $cookies, $cookieStore, $cxConstants) {
 

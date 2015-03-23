@@ -2,6 +2,12 @@
 
 var app = angular.module('demo', ['ngConexo']);
 
+app.constant('USER_NATURE', {
+  anonymous: 'anonymous',
+  primeiroAcesso: 4,
+  segurado: 5
+});
+
 app.controller('DemoCtrl', ['$cxAuth', '$cxRequest', '$scope', 
 	function ($cxAuth, $cxRequest, $scope) {
 
@@ -12,9 +18,8 @@ app.controller('DemoCtrl', ['$cxAuth', '$cxRequest', '$scope',
 			$scope.message = '';
 
 			var credentials = {
-				username: 'Administrador',
-				password: '',
-				syscode: 63
+				username: 'signup63',
+				password: ''
 			};
 
 			$cxAuth.login(credentials).then(
