@@ -92,13 +92,13 @@ mod.factory('$cxAuth',['$cxRequest', '$q', '$cookies', '$cookieStore', '$cxConst
 					var req = $cxRequest.newRequest(2759, 'RM_OBTEM_DADOS_USUARIO');
 					req.send().then(
 						function(data) {
-
-							self.user = {
-								id: 	data.SYSMSG.user[0].id[0]._,
-								login: 	data.SYSMSG.user[0].login[0]._,
-								nature: data.SYSMSG.user[0].nature[0]._
-							};
-
+							self.user = {};
+							self.user.id = data.SYSMSG.user[0].id[0]._; 
+							self.user.login = data.SYSMSG.user[0].login[0]._; 
+							self.user.nature = data.SYSMSG.user[0].nature[0]._;
+							if (data.SYSMSG.user[0].name !== undefined) {
+								self.user.name = data.SYSMSG.user[0].name[0]._;	
+							}
 							$cookieStore.put('user', self.user);
 							deferred.resolve(self.user);
 						},
