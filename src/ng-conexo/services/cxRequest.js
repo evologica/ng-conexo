@@ -117,8 +117,11 @@ mod.provider('$cxRequest', [
 			cxRequest.execute = function(data) {
 				var self = this;
 				var deferred = $q.defer();
+				console.log('execute:');
+				console.log(data);
 				$http.post(url, data, config).success(
 					function(response) {
+						console.log(response);
 						if (response.SYSMSG._Id === 1) { //SYSTEM ERROR
 							deferred.reject(response.SYSMSG.MESSAGE[0]._);
 						}

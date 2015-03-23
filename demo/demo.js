@@ -5,6 +5,8 @@ var app = angular.module('demo', ['ngConexo']);
 app.controller('DemoCtrl', ['$cxAuth', '$cxRequest', '$scope', 
 	function ($cxAuth, $cxRequest, $scope) {
 
+		$scope.message = $cxAuth.getUser();
+
 		$scope.login = function() {
 
 			$scope.message = '';
@@ -17,7 +19,7 @@ app.controller('DemoCtrl', ['$cxAuth', '$cxRequest', '$scope',
 
 			$cxAuth.login(credentials).then(
 				function(response) {
-					$scope.message = 'login successful'
+					$scope.message = response
 				},
 				function(err) {
 					$scope.message = err;
@@ -62,5 +64,5 @@ app.config(function($cxRequestProvider) {
 	$cxRequestProvider.setSysCode(63);
 	$cxRequestProvider.setPort(5370);
 	$cxRequestProvider.setChannel('BANSEG');
-	$cxRequestProvider.setTimeout(15000);
+	$cxRequestProvider.setTimeout(1500000);
 });
