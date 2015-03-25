@@ -114,7 +114,7 @@ mod.factory('$cxAuth',['$cxRequest', '$q', '$cookies', '$cookieStore', '$cxConst
 			return this.user;
 		};
 
-		$cxRequest.registerContextListener(cxAuth.updateSession);
+		$cxRequest.registerOnContextUpdate(cxAuth.updateSession);
 		cxAuth.getAuth();
 		cxAuth.getUser();
 		return cxAuth;

@@ -139,7 +139,7 @@ mod.factory('$cxAuth',['$cxRequest', '$q', '$cookies', '$cookieStore', '$cxConst
 			return this.user;
 		};
 
-		$cxRequest.registerContextListener(cxAuth.updateSession);
+		$cxRequest.registerOnContextUpdate(cxAuth.updateSession);
 		cxAuth.getAuth();
 		cxAuth.getUser();
 		return cxAuth;
@@ -205,10 +205,23 @@ mod.provider('$cxRequest', [
 			var context;
 			var contextListener;
 			var timer;
+
+			var onConnectionError;
+			var onTimeoutError;
+			var onContextUpdate;
+
 			var cxRequest = {};
 
-			cxRequest.registerContextListener = function (listener) {
-				this.contextListener = listener; 
+			cxRequest.registerOnConnectionError = function (callback) {
+				this.onConnectionError = callback;
+			};
+
+			cxRequest.registerOnTimeoutError = function (callback) {
+				this.onTimeoutError = callback;
+			};
+
+			cxRequest.registerOnContextUpdate = function (callback) {
+				this.onContextUpdate = callback; 
 			};
 
 			cxRequest.getSessionContext = function () {
@@ -233,8 +246,8 @@ mod.provider('$cxRequest', [
 			};
 
 			cxRequest.updateContext = function() {
-				if (this.contextListener !== undefined) {
-					this.contextListener(this.getSessionContext());
+				if (this.onContextUpdate !== undefined) {
+					this.onContextUpdate(this.getSessionContext());
 				}
 			};
 
@@ -270,6 +283,10 @@ mod.provider('$cxRequest', [
 					function(response) {
 						console.log(response);
 						if (response.SYSMSG._Id === 1) { //SYSTEM ERROR
+							if (response.SYSMSG.MESSAGE[0]._.indexOf('Destinario da requisição não encontrado') > -1) {
+								self.resetSessionContext();
+								self.onTimeoutError(response.SYSMSG.MESSAGE[0]._);
+							}
 							deferred.reject(response.SYSMSG.MESSAGE[0]._);
 						}
 						else if (response.SYSMSG._Id === 2) {
@@ -279,11 +296,12 @@ mod.provider('$cxRequest', [
 							if (self.timer !== undefined) {
 								$timeout.cancel(timer);
 							}
-							console.log('reset timeout');							
+							console.log('reset timeout');	
 							self.timer = $timeout(
 								function() {
 									console.log('timeout reached');
 									self.resetSessionContext();
+									self.onTimeoutError();
 								},
 								timeout
 							);
@@ -293,6 +311,8 @@ mod.provider('$cxRequest', [
 					}
 				).error(
 					function(err) {
+						//calback
+						self.onConnectionError(err);
 						deferred.reject(err);
 					}
 				);

@@ -18,8 +18,8 @@ app.controller('DemoCtrl', ['$cxAuth', '$cxRequest', '$scope',
 			$scope.message = '';
 
 			var credentials = {
-				username: 'signup63',
-				password: ''
+				username: '07031922720',
+				password: '0'
 			};
 
 			$cxAuth.login(credentials).then(
@@ -41,7 +41,7 @@ app.controller('DemoCtrl', ['$cxAuth', '$cxRequest', '$scope',
 					$scope.message = 'logout successful'
 				},
 				function(err) {
-					$scope.message = err;
+					$scope.message = 'logout unsuccesful';
 				}
 			);
 		};
@@ -49,7 +49,7 @@ app.controller('DemoCtrl', ['$cxAuth', '$cxRequest', '$scope',
 		$scope.listPolicies = function() {
 			$scope.message = '';
 			var req = $cxRequest.newRequest(2655, 'RM_CONSULTA_CONTRATOS');
-			req.data.SYSMSG.CPF_CNPJ = '07031922720';
+			//req.data.SYSMSG.CPF_CNPJ = '07031922720';
 			req.send().then(
 				function (response) {
 					console.log(response);
@@ -71,3 +71,23 @@ app.config(function($cxRequestProvider) {
 	$cxRequestProvider.setChannel('BANSEG');
 	$cxRequestProvider.setTimeout(1500000);
 });
+
+app.run(function($cxRequest, $cxAuth) {
+
+		$cxRequest.registerOnTimeoutError(
+			function () {
+				$cxAuth.cleanAuth();
+				console.log('teste');
+			}
+
+		);
+
+		$cxRequest.registerOnConnectionError(
+			function () {
+				$cxAuth.cleanAuth();
+				console.log('teste');
+			}
+		);
+
+	}
+);
