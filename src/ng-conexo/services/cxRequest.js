@@ -167,6 +167,13 @@ mod.provider('$cxRequest', [
 				).error(
 					function(err) {
 						//calback
+
+						//timeout
+						if (self.timer !== undefined) {
+							console.log('canceling timeout2');
+							$timeout.cancel(timer);
+						}
+
 						self.onConnectionError(err);
 						deferred.reject(err);
 					}
