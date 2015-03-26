@@ -146,21 +146,23 @@ mod.provider('$cxRequest', [
 							deferred.reject(response.SYSMSG.MESSAGE[0]._);
 						}
 						else {
-							if (self.timer !== undefined) {
-								$timeout.cancel(timer);
-							}
-							console.log('reset timeout');	
-							self.timer = $timeout(
-								function() {
-									console.log('timeout reached');
-									self.resetSessionContext();
-									self.onTimeoutError();
-								},
-								timeout
-							);
 
 							deferred.resolve(response);
 						}
+						//timeout
+						if (self.timer !== undefined) {
+							console.log('canceling timeout');
+							$timeout.cancel(timer);
+						}
+						console.log('reset timeout');
+						self.timer = $timeout(
+							function() {
+								console.log('timeout reached');
+								self.resetSessionContext();
+								self.onTimeoutError('Tempo limite da sessão expirado');
+							},
+							timeout
+						);
 					}
 				).error(
 					function(err) {
