@@ -152,7 +152,7 @@ mod.provider('$cxRequest', [
 						//timeout
 						if (self.timer !== undefined) {
 							console.log('canceling timeout');
-							$timeout.cancel(timer);
+							$timeout.cancel(self.timer);
 						}
 						console.log('reset timeout');
 						self.timer = $timeout(
@@ -167,11 +167,11 @@ mod.provider('$cxRequest', [
 				).error(
 					function(err) {
 						//calback
-
+						
 						//timeout
 						if (self.timer !== undefined) {
 							console.log('canceling timeout2');
-							$timeout.cancel(timer);
+							$timeout.cancel(self.timer);
 						}
 
 						self.onConnectionError(err);
