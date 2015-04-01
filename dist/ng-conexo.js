@@ -11,13 +11,12 @@
       });
 
   // Modules
-  angular.module('ngConexo.services', []);
+  angular.module('ngConexo.services', ['LocalStorageModule']);
 
   angular.module('ngConexo',
       [
           'ngConexo.config',
           'ngConexo.services',
-          'ngCookies',
           'ngSanitize'
       ]);
 
@@ -33,20 +32,20 @@ mod.constant('$cxConstants', {
 	OPEN_UC: 11
 });
 
-mod.factory('$cxAuth',['$cxRequest', '$q', '$cookies', '$cookieStore', '$cxConstants', 
-	function($cxRequest, $q, $cookies, $cookieStore, $cxConstants) {
+mod.factory('$cxAuth',['$cxRequest', '$q', 'localStorageService', '$cxConstants', 
+	function($cxRequest, $q, localStorageService, $cxConstants) {
 
 		var cxAuth = {};
 		var user;
 
 		cxAuth.updateSession = function(context) {
-			$cookieStore.put('context', context);
+			localStorageService.set('context', context);
 		};
 
 		cxAuth.getAuth = function() {
 			var context = $cxRequest.getSessionContext();
 			if (context === undefined) {
-				context = $cookies.context;
+				context = localStorageService.get('context');
 				if (context !== undefined) {
 					$cxRequest.setSessionContext(angular.fromJson(context));
 				}
@@ -55,8 +54,8 @@ mod.factory('$cxAuth',['$cxRequest', '$q', '$cookies', '$cookieStore', '$cxConst
 		};
 
 		cxAuth.cleanAuth = function() {
-			$cookieStore.remove('context');
-			$cookieStore.remove('user');			
+			localStorageService.remove('context');
+			localStorageService.remove('user');			
 			this.user = {
 				name: '',
 				nature: 'anonymous'
@@ -82,7 +81,7 @@ mod.factory('$cxAuth',['$cxRequest', '$q', '$cookies', '$cookieStore', '$cxConst
 			$cxRequest.openSession(credentials).then(
 				function (response) {
 					console.log(response);
-					$cookieStore.put('context', response);
+					localStorageService.set('context', response);
 					var req = $cxRequest.newRequest(2759, 'RM_OBTEM_DADOS_USUARIO');
 					req.send().then(
 						function(data) {
@@ -93,7 +92,7 @@ mod.factory('$cxAuth',['$cxRequest', '$q', '$cookies', '$cookieStore', '$cxConst
 							if (data.SYSMSG.user[0].name !== undefined) {
 								self.user.name = data.SYSMSG.user[0].name[0]._;	
 							}
-							$cookieStore.put('user', self.user);
+							localStorageService.set('user', self.user);
 							deferred.resolve(self.user);
 						},
 						function(err) {
@@ -126,7 +125,7 @@ mod.factory('$cxAuth',['$cxRequest', '$q', '$cookies', '$cookieStore', '$cxConst
 
 		cxAuth.getUser = function () {
 			if (this.user === undefined) {
-				this.user = $cookies.user;
+				this.user = localStorageService.get('user');
 				if (this.user === undefined) {
 					this.user = {
 						name: '',
@@ -486,4 +485,10 @@ mod.factory('$cxRequestInterceptor',['$injector',
 
 mod.config(['$httpProvider', function($httpProvider) {
     $httpProvider.interceptors.push('$cxRequestInterceptor');
+}]);
+
+mod.config(['localStorageServiceProvider', function(localStorageServiceProvider) {
+  localStorageServiceProvider.setPrefix('sala-segurado');
+  localStorageServiceProvider.setStorageType('localStorage');
+  localStorageServiceProvider.setNotify(true, true);
 }]);

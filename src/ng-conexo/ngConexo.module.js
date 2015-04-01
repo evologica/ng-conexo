@@ -11,13 +11,12 @@
       });
 
   // Modules
-  angular.module('ngConexo.services', []);
+  angular.module('ngConexo.services', ['LocalStorageModule']);
 
   angular.module('ngConexo',
       [
           'ngConexo.config',
           'ngConexo.services',
-          'ngCookies',
           'ngSanitize'
       ]);
 

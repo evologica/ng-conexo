@@ -31,3 +31,9 @@ mod.factory('$cxRequestInterceptor',['$injector',
 mod.config(['$httpProvider', function($httpProvider) {
     $httpProvider.interceptors.push('$cxRequestInterceptor');
 }]);
+
+mod.config(['localStorageServiceProvider', function(localStorageServiceProvider) {
+  localStorageServiceProvider.setPrefix('sala-segurado');
+  localStorageServiceProvider.setStorageType('localStorage');
+  localStorageServiceProvider.setNotify(true, true);
+}]);
