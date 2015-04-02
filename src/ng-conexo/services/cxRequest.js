@@ -10,7 +10,7 @@ mod.provider('$cxRequest', [
 		var syscode = '';
 		var port = '';
 		var channel = '';
-		var timeout = 10000;
+		var timeout = 100000;
 		var config = {};
 
 		var updateConfig = function() {

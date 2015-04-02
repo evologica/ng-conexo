@@ -46,8 +46,10 @@ mod.factory('$cxAuth',['$cxRequest', '$q', 'localStorageService', '$cxConstants'
 			var context = $cxRequest.getSessionContext();
 			if (context === undefined) {
 				context = localStorageService.get('context');
-				if (context !== undefined) {
+				if (context !== undefined || context !== null) {
 					$cxRequest.setSessionContext(angular.fromJson(context));
+				} else {
+					context = undefined;
 				}
 			}
 			return context;
@@ -63,7 +65,7 @@ mod.factory('$cxAuth',['$cxRequest', '$q', 'localStorageService', '$cxConstants'
 		};
 
 		cxAuth.isAuthenticated = function () {
-			return this.getAuth() !== undefined;
+			return (this.getAuth() !== undefined || this.getAuth() !== null);
 		};
 
 		cxAuth.isAuthorized = function (authorizedNatures) {
@@ -126,7 +128,7 @@ mod.factory('$cxAuth',['$cxRequest', '$q', 'localStorageService', '$cxConstants'
 		cxAuth.getUser = function () {
 			if (this.user === undefined) {
 				this.user = localStorageService.get('user');
-				if (this.user === undefined) {
+				if (this.user === undefined || this.user === null) {
 					this.user = {
 						name: '',
 						nature: 'anonymous'
@@ -156,7 +158,7 @@ mod.provider('$cxRequest', [
 		var syscode = '';
 		var port = '';
 		var channel = '';
-		var timeout = 10000;
+		var timeout = 100000;
 		var config = {};
 
 		var updateConfig = function() {
