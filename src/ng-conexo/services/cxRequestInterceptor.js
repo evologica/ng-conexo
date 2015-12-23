@@ -2,7 +2,7 @@
 
 var mod = angular.module('ngConexo.services');
 
-mod.factory('$cxRequestInterceptor',['$injector', 
+mod.factory('$cxRequestInterceptor',['$injector',
 	function ($injector) {
 		var cxInterceptor = {};
 		cxInterceptor.request = function (req) {
@@ -33,7 +33,7 @@ mod.config(['$httpProvider', function($httpProvider) {
 }]);
 
 mod.config(['localStorageServiceProvider', function(localStorageServiceProvider) {
-  localStorageServiceProvider.setPrefix('sala-segurado');
+  localStorageServiceProvider.setPrefix('auth');
   localStorageServiceProvider.setStorageType('localStorage');
   localStorageServiceProvider.setNotify(true, true);
 }]);

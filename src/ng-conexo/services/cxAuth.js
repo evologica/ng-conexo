@@ -67,6 +67,12 @@ mod.factory('$cxAuth',['$cxRequest', '$q', 'localStorageService', '$cxConstants'
 							self.user.id = data.SYSMSG.ID[0]._;
 							self.user.login = data.SYSMSG.Name[0]._;
 							self.user.email = data.SYSMSG.Email[0]._;
+							if (data.SYSMSG.Profile !== undefined) {
+								self.user.nature = data.SYSMSG.Profile[0]._;
+							} else {
+								self.user.nature = 'unknown';
+							}
+
 							localStorageService.set('user', self.user);
 							deferred.resolve(self.user);
 						},
