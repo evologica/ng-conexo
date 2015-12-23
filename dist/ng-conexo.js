@@ -29,10 +29,11 @@ var mod = angular.module('ngConexo.services');
 mod.constant('$cxConstants', {
 	LOGOUT: 4,
 	LOGIN: 5,
+	USER_DATA: 7,
 	OPEN_UC: 11
 });
 
-mod.factory('$cxAuth',['$cxRequest', '$q', 'localStorageService', '$cxConstants', 
+mod.factory('$cxAuth',['$cxRequest', '$q', 'localStorageService', '$cxConstants',
 	function($cxRequest, $q, localStorageService, $cxConstants) {
 
 		var cxAuth = {};
@@ -57,7 +58,7 @@ mod.factory('$cxAuth',['$cxRequest', '$q', 'localStorageService', '$cxConstants'
 
 		cxAuth.cleanAuth = function() {
 			localStorageService.remove('context');
-			localStorageService.remove('user');			
+			localStorageService.remove('user');
 			this.user = {
 				name: '',
 				nature: 'anonymous'
@@ -74,7 +75,7 @@ mod.factory('$cxAuth',['$cxRequest', '$q', 'localStorageService', '$cxConstants'
 			}
 			console.log('user role: ' + this.user.nature + ' authorized: ' + authorizedNatures[0]);
 			return authorizedNatures.indexOf(this.user.nature) !== -1;
-		};		
+		};
 
 		cxAuth.login = function(credentials) {
 			var self = this;
@@ -84,16 +85,18 @@ mod.factory('$cxAuth',['$cxRequest', '$q', 'localStorageService', '$cxConstants'
 				function (response) {
 					console.log(response);
 					localStorageService.set('context', response);
-					var req = $cxRequest.newRequest(2759, 'RM_OBTEM_DADOS_USUARIO');
-					req.send().then(
+					$cxRequest.getUserData(credentials).then(
 						function(data) {
 							self.user = {};
-							self.user.id = data.SYSMSG.user[0].id[0]._; 
-							self.user.login = data.SYSMSG.user[0].login[0]._; 
-							self.user.nature = data.SYSMSG.user[0].nature[0]._;
-							if (data.SYSMSG.user[0].name !== undefined) {
-								self.user.name = data.SYSMSG.user[0].name[0]._;	
+							self.user.id = data.SYSMSG.ID[0]._;
+							self.user.login = data.SYSMSG.Name[0]._;
+							self.user.email = data.SYSMSG.Email[0]._;
+							if (data.SYSMSG.Profile !== undefined) {
+								self.user.nature = data.SYSMSG.Profile[0]._;
+							} else {
+								self.user.nature = 'unknown';
 							}
+
 							localStorageService.set('user', self.user);
 							deferred.resolve(self.user);
 						},
@@ -146,6 +149,7 @@ mod.factory('$cxAuth',['$cxRequest', '$q', 'localStorageService', '$cxConstants'
 		return cxAuth;
 	}
 ]);
+
 'use strict';
 
 var mod = angular.module('ngConexo.services');
@@ -199,7 +203,7 @@ mod.provider('$cxRequest', [
 
 		this.setTimeout = function(value) {
 			timeout = value;
-		};		
+		};
 
 		this.$get = function($http, $q, $rootScope, $cxConstants, $timeout) {
 
@@ -222,7 +226,7 @@ mod.provider('$cxRequest', [
 			};
 
 			cxRequest.registerOnContextUpdate = function (callback) {
-				this.onContextUpdate = callback; 
+				this.onContextUpdate = callback;
 			};
 
 			cxRequest.getSessionContext = function () {
@@ -315,7 +319,7 @@ mod.provider('$cxRequest', [
 				).error(
 					function(err) {
 						//calback
-						
+
 						//timeout
 						if (self.timer !== undefined) {
 							console.log('canceling timeout2');
@@ -326,6 +330,35 @@ mod.provider('$cxRequest', [
 						deferred.reject(err);
 					}
 				);
+				return deferred.promise;
+			};
+
+			cxRequest.getUserData = function(auth) {
+				var self = this;
+
+				var deferred = $q.defer();
+
+				var data = {
+					SYSMSG: {
+						_SignalName: $cxConstants.USER_DATA,
+						_Recipient: 0,
+						SYSTEM_CODE: syscode,
+						LOGIN: auth.username,
+						AUDIT_CONTEXT: '',
+						CLIENT_VERSION: '1.0.5.0',
+						CHANNEL: channel
+					}
+				};
+
+				self.execute(data).then(
+					function (response) {
+						deferred.resolve(response);
+					},
+					function (err) {
+						deferred.reject(err);
+					}
+				);
+
 				return deferred.promise;
 			};
 
@@ -459,7 +492,7 @@ mod.provider('$cxRequest', [
 
 var mod = angular.module('ngConexo.services');
 
-mod.factory('$cxRequestInterceptor',['$injector', 
+mod.factory('$cxRequestInterceptor',['$injector',
 	function ($injector) {
 		var cxInterceptor = {};
 		cxInterceptor.request = function (req) {
@@ -490,7 +523,7 @@ mod.config(['$httpProvider', function($httpProvider) {
 }]);
 
 mod.config(['localStorageServiceProvider', function(localStorageServiceProvider) {
-  localStorageServiceProvider.setPrefix('sala-segurado');
+  localStorageServiceProvider.setPrefix('auth');
   localStorageServiceProvider.setStorageType('localStorage');
   localStorageServiceProvider.setNotify(true, true);
 }]);
