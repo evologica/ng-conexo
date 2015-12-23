@@ -51,7 +51,7 @@ mod.provider('$cxRequest', [
 
 		this.setTimeout = function(value) {
 			timeout = value;
-		};		
+		};
 
 		this.$get = function($http, $q, $rootScope, $cxConstants, $timeout) {
 
@@ -74,7 +74,7 @@ mod.provider('$cxRequest', [
 			};
 
 			cxRequest.registerOnContextUpdate = function (callback) {
-				this.onContextUpdate = callback; 
+				this.onContextUpdate = callback;
 			};
 
 			cxRequest.getSessionContext = function () {
@@ -167,7 +167,7 @@ mod.provider('$cxRequest', [
 				).error(
 					function(err) {
 						//calback
-						
+
 						//timeout
 						if (self.timer !== undefined) {
 							console.log('canceling timeout2');
@@ -178,6 +178,35 @@ mod.provider('$cxRequest', [
 						deferred.reject(err);
 					}
 				);
+				return deferred.promise;
+			};
+
+			cxRequest.getUserData = function(auth) {
+				var self = this;
+
+				var deferred = $q.defer();
+
+				var data = {
+					SYSMSG: {
+						_SignalName: $cxConstants.USER_DATA,
+						_Recipient: 0,
+						SYSTEM_CODE: syscode,
+						LOGIN: auth.username,
+						AUDIT_CONTEXT: '',
+						CLIENT_VERSION: '1.0.5.0',
+						CHANNEL: channel
+					}
+				};
+
+				self.execute(data).then(
+					function (response) {
+						deferred.resolve(response);
+					},
+					function (err) {
+						deferred.reject(err);
+					}
+				);
+
 				return deferred.promise;
 			};
 

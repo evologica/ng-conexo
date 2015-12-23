@@ -5,10 +5,11 @@ var mod = angular.module('ngConexo.services');
 mod.constant('$cxConstants', {
 	LOGOUT: 4,
 	LOGIN: 5,
+	USER_DATA: 7,
 	OPEN_UC: 11
 });
 
-mod.factory('$cxAuth',['$cxRequest', '$q', 'localStorageService', '$cxConstants', 
+mod.factory('$cxAuth',['$cxRequest', '$q', 'localStorageService', '$cxConstants',
 	function($cxRequest, $q, localStorageService, $cxConstants) {
 
 		var cxAuth = {};
@@ -33,7 +34,7 @@ mod.factory('$cxAuth',['$cxRequest', '$q', 'localStorageService', '$cxConstants'
 
 		cxAuth.cleanAuth = function() {
 			localStorageService.remove('context');
-			localStorageService.remove('user');			
+			localStorageService.remove('user');
 			this.user = {
 				name: '',
 				nature: 'anonymous'
@@ -50,7 +51,7 @@ mod.factory('$cxAuth',['$cxRequest', '$q', 'localStorageService', '$cxConstants'
 			}
 			console.log('user role: ' + this.user.nature + ' authorized: ' + authorizedNatures[0]);
 			return authorizedNatures.indexOf(this.user.nature) !== -1;
-		};		
+		};
 
 		cxAuth.login = function(credentials) {
 			var self = this;
@@ -60,16 +61,12 @@ mod.factory('$cxAuth',['$cxRequest', '$q', 'localStorageService', '$cxConstants'
 				function (response) {
 					console.log(response);
 					localStorageService.set('context', response);
-					var req = $cxRequest.newRequest(2759, 'RM_OBTEM_DADOS_USUARIO');
-					req.send().then(
+					$cxRequest.getUserData(credentials).then(
 						function(data) {
 							self.user = {};
-							self.user.id = data.SYSMSG.user[0].id[0]._; 
-							self.user.login = data.SYSMSG.user[0].login[0]._; 
-							self.user.nature = data.SYSMSG.user[0].nature[0]._;
-							if (data.SYSMSG.user[0].name !== undefined) {
-								self.user.name = data.SYSMSG.user[0].name[0]._;	
-							}
+							self.user.id = data.SYSMSG.ID[0]._;
+							self.user.login = data.SYSMSG.Name[0]._;
+							self.user.email = data.SYSMSG.Email[0]._;
 							localStorageService.set('user', self.user);
 							deferred.resolve(self.user);
 						},
